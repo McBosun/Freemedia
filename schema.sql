@@ -31,3 +31,10 @@ create policy "owner deletes videos" on videos for delete using (owner = auth.ui
 
 create policy "public reads streams" on live_streams for select using (true);
 create policy "owner manages streams" on live_streams for all using (owner = auth.uid()) with check (owner = auth.uid());
+
+-- Raw upload bucket (private); each user may write/read only their own folder
+insert into storage.buckets (id, name, public) values ('raw-uploads','raw-uploads',false) on conflict do nothing;
+create policy "users upload own raw" on storage.objects for insert to authenticated
+  with check (bucket_id = 'raw-uploads' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "users read own raw" on storage.objects for select to authenticated
+  using (bucket_id = 'raw-uploads' and (storage.foldername(name))[1] = auth.uid()::text);

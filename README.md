@@ -71,3 +71,11 @@ How it works: OBS -> MediaMTX (RTMP ingest only) -> ffmpeg packages 4s HLS segme
 - Latency is about 10 to 20 seconds. This is the trade-off for zero egress; WebRTC/low-latency is not available in this mode.
 - R2 free write limit is 1M writes per month. With 4s segments, one stream uses about 21,600 per day, so roughly 46 stream-days free per month. Beyond that, writes cost $4.50 per million.
 - Anyone with the stream key and password can publish, so use a hard-to-guess key per stream and rotate the password.
+
+## Console (the backend website)
+`docs/index.html` is a single-page admin console: sign in, upload videos, watch processing status, play HLS, create live streams with OBS settings, and browse/insert/delete rows in any table.
+- Run `schema.sql` first (it also creates the `raw-uploads` storage bucket and policies).
+- Host it free on GitHub Pages: repo Settings > Pages > Deploy from branch > `main` and folder `/docs`. The Pages address is your site link.
+- Open it, enter your Supabase API URL, anon key, CDN URL and server IP. Settings are stored only in your browser.
+- Add your Pages address to the allowed redirect/site URL in Supabase (`SITE_URL` / `ADDITIONAL_REDIRECT_URLS` in its .env) if sign-in emails are used.
+- For uploads over 50 MB set `FILE_SIZE_LIMIT` in Supabase's .env.

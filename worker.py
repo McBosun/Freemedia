@@ -1,5 +1,5 @@
 """Polls Postgres for uploaded videos, transcodes to HLS (360p + 720p), uploads to MinIO."""
-import os, time, subprocess, tempfile, pathlib, mimetypes, traceback
+import os, time, subprocess, tempfile, pathlib, mimetypes, traceback, shutil, urllib.request, urllib.parse
 import boto3, psycopg2
 from botocore.client import Config
 
@@ -9,6 +9,13 @@ s3 = boto3.client(
     aws_secret_access_key=os.environ["S3_SECRET_KEY"],
     config=Config(signature_version="s3v4"), region_name=os.environ.get("S3_REGION", "auto"))
 RAW, OUT = os.environ["RAW_BUCKET"], os.environ["HLS_BUCKET"]
+
+def fetch_raw(path, dest):
+    key = os.environ["SUPABASE_SERVICE_KEY"]
+    url = f"{os.environ['SUPABASE_URL']}/storage/v1/object/{RAW}/{urllib.parse.quote(path)}"
+    req = urllib.request.Request(url, headers={"Authorization": "Bearer " + key, "apikey": key})
+    with urllib.request.urlopen(req) as r, open(dest, "wb") as f:
+        shutil.copyfileobj(r, f)
 
 def connect():
     while True:
@@ -59,7 +66,7 @@ def main():
                 with tempfile.TemporaryDirectory() as tmp:
                     src = f"{tmp}/input"; out = f"{tmp}/out"
                     os.makedirs(out)
-                    s3.download_file(RAW, raw_path, src)
+                    fetch_raw(raw_path, src)
                     transcode(src, out)
                     upload_dir(out, str(vid))
                 with conn.cursor() as cur:
