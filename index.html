@@ -1,144 +1,150 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Media Backend Console</title>
+<title>Media Backend Dashboard</title>
 <style>
-:root{--bg:#f7f7f5;--card:#fff;--tx:#1b1b1b;--mut:#6b6b6b;--bd:#e2e2de;--ac:#1d6fe0;--ok:#1a8f4d;--bad:#c93a3a;--warn:#b7791f}
-@media(prefers-color-scheme:dark){:root{--bg:#121212;--card:#1c1c1c;--tx:#eee;--mut:#9a9a9a;--bd:#333;--ac:#5aa0ff;--ok:#4cc27f;--bad:#ff7070;--warn:#e6b450}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,sans-serif}
-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--card);position:sticky;top:0;z-index:5}
-h1{font-size:17px;margin:0}nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px}
-nav button{white-space:nowrap}main{padding:0 16px 40px;max-width:980px;margin:auto}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin:12px 0}
-input,select,textarea{width:100%;padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;margin:4px 0 8px}
-button{padding:8px 13px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit;cursor:pointer}
+:root{--bg:#f4f5f7;--card:#fff;--side:#10151c;--sidetx:#c9d1dc;--tx:#1b1f24;--mut:#68707b;--bd:#e3e6ea;--ac:#2f7bf0;--ok:#1a9b55;--bad:#d64545;--warn:#c98a14}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--side:#0a0e13;--tx:#e6e9ee;--mut:#8b94a1;--bd:#262d36;--ac:#5b9bff;--ok:#3fcf82;--bad:#ff7a7a;--warn:#e8b64c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,sans-serif}
+#app{display:flex;min-height:100vh}aside{width:220px;background:var(--side);color:var(--sidetx);padding:14px 10px;position:sticky;top:0;height:100vh;flex:none}
+aside h2{font-size:15px;margin:4px 8px 14px;color:#fff}aside button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;padding:9px 10px;border-radius:7px;font:inherit;cursor:pointer}
+aside button.on{background:#1f2a38;color:#fff}aside button:hover{background:#18212c}
+section{flex:1;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:4;gap:8px}
+#menu{display:none}main{padding:16px 18px 50px;max-width:1100px}h3{margin:0 0 10px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}.grid .card{margin:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}.two .card{margin:0}
+.stat b{display:block;font-size:26px}.mut{color:var(--mut);font-size:12.5px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);color:var(--tx);font:inherit;margin:3px 0 8px}
+button{padding:7px 12px;border:1px solid var(--bd);border-radius:7px;background:var(--card);color:var(--tx);font:inherit;cursor:pointer}
 button.p{background:var(--ac);border-color:var(--ac);color:#fff}button.d{color:var(--bad)}button.on{border-color:var(--ac);color:var(--ac)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-.stat b{display:block;font-size:26px}.mut{color:var(--mut);font-size:13px}
-.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd);flex-wrap:wrap}
-.row:first-child{border-top:0}.acts{display:flex;gap:6px;flex-wrap:wrap}
-.tag{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--bd)}
-.ready,.live{color:var(--ok)}.failed{color:var(--bad)}.processing,.uploaded{color:var(--warn)}
-.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid var(--bd);padding:6px;text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-video{width:100%;border-radius:8px;background:#000;max-height:60vh}code{font-size:12px;word-break:break-all}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--bd);flex-wrap:wrap}.row:first-child{border-top:0}
+.acts,.chips{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--bd)}
+.ready,.live,.up{color:var(--ok)}.failed,.down{color:var(--bad)}.processing,.uploaded{color:var(--warn)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:currentColor;margin-right:6px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}tr.r:hover{background:var(--bg);cursor:pointer}
+video{width:100%;border-radius:8px;background:#000;max-height:55vh}code{font-size:12px;word-break:break-all}svg text{fill:var(--mut);font-size:8px}svg .b{fill:var(--ac)}
+.bar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:9px 16px;border-radius:8px;display:none;z-index:9}
-</style></head><body>
-<header><h1>Media Backend Console</h1><span id="who" class="mut"></span></header>
-<nav id="nav" hidden></nav>
-<main id="view"></main><div id="toast"></div>
+@media(max-width:760px){aside{position:fixed;left:-240px;z-index:8;transition:left .2s}aside.open{left:0}#menu{display:inline-block}}
+.noauth aside,.noauth #menu{display:none}
+</style></head><body class="noauth">
+<div id="app"><aside id="side"></aside><section>
+<div class="top"><div><button id="menu" onclick="$('#side').classList.toggle('open')">Menu</button> <b id="title">Dashboard</b></div><span class="mut" id="who"></span></div>
+<main id="view"></main></section></div><div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let sb,tab='overview',timer;
 const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const cfg=()=>({url:store.get('url'),key:store.get('key'),cdn:store.get('cdn'),rtmp:store.get('rtmp')});
-function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',3500)}
-function setView(h){$('#view').innerHTML=h}
-function play(url){
-  const box=$('#player');box.innerHTML='<video controls autoplay playsinline></video><div class="mut"><code>'+esc(url)+'</code></div>';
-  const v=box.querySelector('video');
-  if(v.canPlayType('application/vnd.apple.mpegurl'))v.src=url;
-  else if(window.Hls&&Hls.isSupported()){const h=new Hls();h.loadSource(url);h.attachMedia(v)}
-  box.scrollIntoView({behavior:'smooth'});
-}
+const SECS=[['overview','Overview'],['videos','Videos'],['live','Live streams'],['db','Database'],['storage','Storage'],['analytics','Analytics'],['settings','Settings']];
+let sb,tab='overview',timer,dbT='videos',dbPage=0,dbRows=[];
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',3500)};
+const view=h=>$('#view').innerHTML=h;
+const fmt=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':n>=1e6?(n/1e6).toFixed(1)+' MB':n>=1e3?(n/1e3).toFixed(0)+' KB':n+' B';
+function play(url){const b=$('#player');b.innerHTML='<div class="card"><video controls autoplay playsinline></video><div class="mut"><code>'+esc(url)+'</code></div></div>';const v=b.querySelector('video');
+ if(v.canPlayType('application/vnd.apple.mpegurl'))v.src=url;else if(window.Hls&&Hls.isSupported()){const h=new Hls();h.loadSource(url);h.attachMedia(v)}b.scrollIntoView({behavior:'smooth'})}
 async function boot(){
-  clearInterval(timer);const c=cfg();
-  if(!c.url||!c.key)return connectView();
-  sb=supabase.createClient(c.url,c.key);
-  const {data:{session}}=await sb.auth.getSession();
+  clearInterval(timer);const c=cfg();if(!c.url||!c.key)return connectView();
+  sb=supabase.createClient(c.url,c.key);const {data:{session}}=await sb.auth.getSession();
   if(!session)return authView();
-  $('#who').textContent=session.user.email;$('#nav').hidden=false;go(tab);
+  document.body.classList.remove('noauth');$('#who').textContent=session.user.email;go(tab);
 }
 function connectView(){
-  $('#nav').hidden=true;const c=cfg();
-  setView(`<div class="card"><h3>Connect your backend</h3>
-  <label>Supabase API URL</label><input id="u" placeholder="https://api.example.com" value="${esc(c.url)}">
-  <label>Anon key (never paste the service_role key here)</label><input id="k" value="${esc(c.key)}">
-  <label>CDN base URL (R2 custom domain)</label><input id="c" placeholder="https://cdn.example.com" value="${esc(c.cdn)}">
-  <label>Server address for OBS (RTMP)</label><input id="r" placeholder="rtmp://YOUR_SERVER_IP/" value="${esc(c.rtmp)}">
+  document.body.classList.add('noauth');$('#title').textContent='Connect';const c=cfg();
+  view(`<div class="card" style="max-width:520px"><h3>Connect your backend</h3>
+  <label class="mut">Supabase API URL</label><input id="u" placeholder="https://api.example.com" value="${esc(c.url)}">
+  <label class="mut">Anon key (never the service_role key)</label><input id="k" value="${esc(c.key)}">
+  <label class="mut">CDN base URL (R2 custom domain)</label><input id="c" placeholder="https://cdn.example.com" value="${esc(c.cdn)}">
+  <label class="mut">OBS server address</label><input id="r" placeholder="rtmp://YOUR_SERVER_IP/" value="${esc(c.rtmp)}">
   <button class="p" onclick="saveCfg()">Save and continue</button></div>`);
 }
 function saveCfg(){store.set('url',$('#u').value.trim().replace(/\/$/,''));store.set('key',$('#k').value.trim());store.set('cdn',$('#c').value.trim().replace(/\/$/,''));store.set('rtmp',$('#r').value.trim());boot()}
 function authView(){
-  $('#nav').hidden=true;$('#who').textContent='';
-  setView(`<div class="card"><h3>Sign in</h3><input id="e" type="email" placeholder="Email"><input id="p" type="password" placeholder="Password">
-  <button class="p" onclick="auth('in')">Sign in</button> <button onclick="auth('up')">Create account</button> <button onclick="connectView()">Settings</button></div>`);
+  document.body.classList.add('noauth');$('#title').textContent='Sign in';$('#who').textContent='';
+  view(`<div class="card" style="max-width:420px"><h3>Sign in</h3><input id="e" type="email" placeholder="Email"><input id="p" type="password" placeholder="Password">
+  <div class="acts"><button class="p" onclick="auth('in')">Sign in</button><button onclick="auth('up')">Create account</button><button onclick="connectView()">Settings</button></div></div>`);
 }
-async function auth(m){
-  const cr={email:$('#e').value,password:$('#p').value};
+async function auth(m){const cr={email:$('#e').value,password:$('#p').value};
   const {error}=m==='in'?await sb.auth.signInWithPassword(cr):await sb.auth.signUp(cr);
-  if(error)return toast(error.message);toast(m==='up'?'Account created. Sign in (confirm email if required).':'Signed in');boot();
-}
+  if(error)return toast(error.message);toast(m==='up'?'Account created. Sign in now.':'Signed in');boot()}
 async function out(){await sb.auth.signOut();boot()}
-const TABS=['overview','videos','live','data','settings'];
-function go(t){
-  tab=t;clearInterval(timer);
-  $('#nav').innerHTML=TABS.map(x=>`<button class="${x===t?'on':''}" onclick="go('${x}')">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')+'<button onclick="out()">Sign out</button>';
-  ({overview,videos,live,data,settings})[t]();
-}
-async function count(table,f){let q=sb.from(table).select('*',{count:'exact',head:true});if(f)q=f(q);const {count}=await q;return count??0}
+function go(t){tab=t;clearInterval(timer);$('#side').classList.remove('open');
+  $('#side').innerHTML='<h2>Media Backend</h2>'+SECS.map(([k,l])=>`<button class="${k===t?'on':''}" onclick="go('${k}')">${l}</button>`).join('')+'<button onclick="out()">Sign out</button>';
+  $('#title').textContent=SECS.find(s=>s[0]===t)[1];({overview,videos,live,db,storage,analytics,settings})[t]()}
+async function count(t,f){let q=sb.from(t).select('*',{count:'exact',head:true});if(f)q=f(q);const {count}=await q;return count??0}
+function bars(vals,labels){const m=Math.max(1,...vals),w=300/vals.length;
+  return `<svg viewBox="0 0 300 110" width="100%">${vals.map((v,i)=>{const h=v/m*80;return `<rect class="b" x="${i*w+2}" y="${90-h}" width="${w-4}" height="${h}" rx="2"><title>${labels[i]}: ${v}</title></rect>`}).join('')}${labels.map((l,i)=>i%3===0?`<text x="${i*w+2}" y="104">${l}</text>`:'').join('')}</svg>`}
+function days(rows,n=14){const d=[],l=[];for(let i=n-1;i>=0;i--){const x=new Date();x.setDate(x.getDate()-i);d.push(x.toDateString());l.push((x.getMonth()+1)+'/'+x.getDate())}
+  return [d.map(s=>rows.filter(r=>new Date(r.created_at).toDateString()===s).length),l]}
+async function health(){const c=cfg();let api=false,cdn=false;
+  try{api=(await fetch(c.url+'/auth/v1/health',{headers:{apikey:c.key}})).ok}catch(e){}
+  try{if(c.cdn){await fetch(c.cdn+'/',{mode:'no-cors'});cdn=true}}catch(e){}return {api,cdn}}
 async function overview(){
-  setView('<p class="mut">Loading…</p>');
-  const [v,r,p,f,l]=await Promise.all([count('videos'),count('videos',q=>q.eq('status','ready')),count('videos',q=>q.in('status',['uploaded','processing'])),count('videos',q=>q.eq('status','failed')),count('live_streams',q=>q.eq('is_live',true))]);
-  setView(`<div class="grid">${[['Videos',v],['Ready',r],['Queued',p],['Failed',f],['Live now',l]].map(([a,b])=>`<div class="card stat"><b>${b}</b><span class="mut">${a}</span></div>`).join('')}</div>
-  <div class="card"><h3>Quick start</h3><p class="mut">Videos: upload a file, the worker turns it into HLS, status becomes Ready. Live: create a stream, copy the OBS settings, press Go live in OBS. Data: browse or edit any table.</p></div>`);
+  view('<p class="mut">Loading…</p>');
+  const [v,r,q,f,l,rows,h]=await Promise.all([count('videos'),count('videos',x=>x.eq('status','ready')),count('videos',x=>x.in('status',['uploaded','processing'])),count('videos',x=>x.eq('status','failed')),count('live_streams',x=>x.eq('is_live',true)),
+    sb.from('videos').select('title,status,views,created_at').order('created_at',{ascending:false}).limit(1000).then(x=>x.data||[]),health()]);
+  const views=rows.reduce((a,b)=>a+(b.views||0),0),[d,lb]=days(rows),tot=Math.max(1,v);
+  const st=(n,c)=>`<div class="mut ${c}"><span class="dot"></span>${n}</div>`;
+  view(`<div class="grid">${[['Videos',v],['Ready',r],['Queued',q],['Failed',f],['Live now',l],['Total views',views]].map(([a,b])=>`<div class="card stat"><b>${b}</b><span class="mut">${a}</span></div>`).join('')}</div>
+  <div class="two"><div class="card"><h3>Uploads, last 14 days</h3>${bars(d,lb)}</div>
+  <div class="card"><h3>Status</h3>${[['Ready',r,'var(--ok)'],['Queued',q,'var(--warn)'],['Failed',f,'var(--bad)']].map(([n,c,col])=>`<div class="mut" style="display:flex;justify-content:space-between"><span>${n}</span><span>${c}</span></div><div class="bar" style="margin-bottom:10px"><i style="width:${c/tot*100}%;background:${col}"></i></div>`).join('')}</div>
+  <div class="card"><h3>System health</h3>${st('Supabase API',h.api?'up':'down')}${st('CDN / R2 domain',h.cdn?'up':'down')}<p class="mut">Checked from your browser just now.</p></div>
+  <div class="card"><h3>Recent activity</h3>${rows.slice(0,6).map(x=>`<div class="row"><span>${esc(x.title)}</span><span class="tag ${x.status}">${x.status}</span></div>`).join('')||'<p class="mut">Nothing yet.</p>'}</div></div>`);
 }
 async function videos(){
-  setView(`<div class="card"><h3>Upload video</h3><input id="t" placeholder="Title"><input id="f" type="file" accept="video/*"><button class="p" id="ub" onclick="upload()">Upload</button><p class="mut">Large files: raise FILE_SIZE_LIMIT in your Supabase .env.</p></div>
-  <div id="player"></div><div class="card" id="list">Loading…</div>`);
-  const draw=async()=>{
-    const {data,error}=await sb.from('videos').select('*').order('created_at',{ascending:false}).limit(100);
-    if(error)return $('#list').textContent=error.message;
+  view(`<div class="card"><h3>Upload video</h3><input id="t" placeholder="Title"><input id="f" type="file" accept="video/*"><button class="p" id="ub" onclick="upload()">Upload</button> <span class="mut">Large files: raise FILE_SIZE_LIMIT in Supabase .env</span></div>
+  <div id="player"></div><div class="card"><div class="chips" style="margin-bottom:8px"><input id="q" placeholder="Search title" oninput="draw()" style="max-width:220px;margin:0"><select id="s" onchange="draw()" style="max-width:150px;margin:0"><option value="">All</option><option>uploaded</option><option>processing</option><option>ready</option><option>failed</option></select></div><div id="list">Loading…</div></div>`);
+  window.draw=async()=>{let q=sb.from('videos').select('*').order('created_at',{ascending:false}).limit(100);
+    if($('#s').value)q=q.eq('status',$('#s').value);if($('#q').value)q=q.ilike('title','%'+$('#q').value+'%');
+    const {data,error}=await q;if(error)return $('#list').textContent=error.message;
     $('#list').innerHTML=data.length?data.map(v=>`<div class="row"><div><b>${esc(v.title)}</b> <span class="tag ${v.status}">${v.status}</span><div class="mut">${new Date(v.created_at).toLocaleString()} · ${v.views} views${v.error?' · '+esc(v.error):''}</div></div>
-    <div class="acts">${v.status==='ready'?`<button onclick="play('${esc(cfg().cdn)}/${esc(v.hls_path)}')">Play</button>`:''}${v.status==='failed'?`<button onclick="retry('${v.id}')">Retry</button>`:''}<button class="d" onclick="del('videos','${v.id}',videos)">Delete</button></div></div>`).join(''):'<p class="mut">No videos yet.</p>';
-  };
-  draw();timer=setInterval(draw,5000);
+    <div class="acts">${v.status==='ready'?`<button onclick="play('${esc(cfg().cdn)}/${esc(v.hls_path)}')">Play</button>`:''}${v.status==='failed'?`<button onclick="retry('${v.id}')">Retry</button>`:''}<button class="d" onclick="del('videos','${v.id}',videos)">Delete</button></div></div>`).join(''):'<p class="mut">No videos.</p>'};
+  draw();timer=setInterval(()=>{if($('#list'))draw()},5000);
 }
-async function upload(){
-  const f=$('#f').files[0];if(!f)return toast('Choose a file');
-  const {data:{user}}=await sb.auth.getUser();const b=$('#ub');b.disabled=true;b.textContent='Uploading…';
-  const path=`${user.id}/${Date.now()}-${f.name.replace(/[^\w.-]/g,'_')}`;
-  const up=await sb.storage.from('raw-uploads').upload(path,f);
+async function upload(){const f=$('#f').files[0];if(!f)return toast('Choose a file');const {data:{user}}=await sb.auth.getUser();const b=$('#ub');b.disabled=true;b.textContent='Uploading…';
+  const path=`${user.id}/${Date.now()}-${f.name.replace(/[^\w.-]/g,'_')}`;const up=await sb.storage.from('raw-uploads').upload(path,f);
   if(up.error){b.disabled=false;b.textContent='Upload';return toast(up.error.message)}
-  const {error}=await sb.from('videos').insert({title:$('#t').value||f.name,raw_path:path});
-  if(error)toast(error.message);else toast('Uploaded. Processing starts shortly.');videos();
-}
+  const {error}=await sb.from('videos').insert({title:$('#t').value||f.name,raw_path:path});toast(error?error.message:'Uploaded. Processing starts shortly.');videos()}
 async function retry(id){await sb.from('videos').update({status:'uploaded',error:null}).eq('id',id);toast('Re-queued')}
 async function del(t,id,cb){if(!confirm('Delete this row?'))return;const {error}=await sb.from(t).delete().eq('id',id);if(error)toast(error.message);cb()}
 async function live(){
-  setView(`<div class="card"><h3>New live stream</h3><input id="t" placeholder="Stream title"><button class="p" onclick="newLive()">Create</button></div><div id="player"></div><div class="card" id="list">Loading…</div>`);
-  const {data,error}=await sb.from('live_streams').select('*').order('created_at',{ascending:false});
-  if(error)return $('#list').textContent=error.message;
-  const c=cfg();
+  view(`<div class="card"><h3>New live stream</h3><input id="t" placeholder="Stream title"><button class="p" onclick="newLive()">Create</button></div><div id="player"></div><div class="card" id="list">Loading…</div>`);
+  const {data,error}=await sb.from('live_streams').select('*').order('created_at',{ascending:false});if(error)return $('#list').textContent=error.message;const c=cfg();
   $('#list').innerHTML=data.length?data.map(s=>`<div class="row" style="align-items:flex-start"><div><b>${esc(s.title)}</b> <span class="tag ${s.is_live?'live':''}">${s.is_live?'live':'offline'}</span>
-  <div class="mut">OBS Server: <code>${esc(c.rtmp||'rtmp://YOUR_SERVER_IP/')}</code><br>Stream key: <code>${esc(s.stream_key)}?user=publisher&amp;pass=YOUR_STREAM_PASSWORD</code><br>Viewer URL: <code>${esc(c.cdn)}/live/${esc(s.stream_key)}/index.m3u8</code></div></div>
-  <div class="acts"><button onclick="play('${esc(c.cdn)}/live/${esc(s.stream_key)}/index.m3u8')">Watch</button><button onclick="toggleLive('${s.id}',${!s.is_live})">${s.is_live?'Mark offline':'Mark live'}</button><button class="d" onclick="del('live_streams','${s.id}',live)">Delete</button></div></div>`).join(''):'<p class="mut">No streams yet.</p>';
-}
+  <div class="mut">OBS server: <code>${esc(c.rtmp||'rtmp://YOUR_SERVER_IP/')}</code><br>Stream key: <code>${esc(s.stream_key)}?user=publisher&amp;pass=YOUR_STREAM_PASSWORD</code><br>Viewer URL: <code>${esc(c.cdn)}/live/${esc(s.stream_key)}/index.m3u8</code></div></div>
+  <div class="acts"><button onclick="play('${esc(c.cdn)}/live/${esc(s.stream_key)}/index.m3u8')">Watch</button><button onclick="toggleLive('${s.id}',${!s.is_live})">${s.is_live?'Mark offline':'Mark live'}</button><button class="d" onclick="del('live_streams','${s.id}',live)">Delete</button></div></div>`).join(''):'<p class="mut">No streams yet.</p>'}
 async function newLive(){const t=$('#t').value;if(!t)return toast('Add a title');const {error}=await sb.from('live_streams').insert({title:t});if(error)toast(error.message);live()}
 async function toggleLive(id,v){await sb.from('live_streams').update({is_live:v}).eq('id',id);live()}
-async function data(){
-  setView(`<div class="card"><h3>Table browser</h3><div style="display:flex;gap:6px"><input id="tn" value="videos" list="tl"><datalist id="tl"><option>videos<option>live_streams</datalist><button class="p" onclick="load()">Load</button></div>
-  <div class="scroll" id="tbl"></div></div>
-  <div class="card"><h3>Insert row (JSON)</h3><textarea id="js" rows="4" placeholder='{"title":"Example"}'></textarea><button onclick="ins()">Insert into table</button></div>`);
-  load();
-}
-async function load(){
-  const t=$('#tn').value.trim();const {data,error}=await sb.from(t).select('*').limit(50);
-  if(error)return $('#tbl').innerHTML='<p class="mut">'+esc(error.message)+'</p>';
-  if(!data.length)return $('#tbl').innerHTML='<p class="mut">No rows.</p>';
-  const cols=Object.keys(data[0]);
-  $('#tbl').innerHTML='<table><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'<th></th></tr>'+data.map(r=>'<tr>'+cols.map(c=>'<td title="'+esc(JSON.stringify(r[c]))+'">'+esc(typeof r[c]==='object'?JSON.stringify(r[c]):r[c])+'</td>').join('')+(r.id?`<td><button class="d" onclick="del('${esc(t)}','${r.id}',load)">Delete</button></td>`:'<td></td>')+'</tr>').join('')+'</table>';
-}
-async function ins(){
-  let row;try{row=JSON.parse($('#js').value)}catch(e){return toast('Invalid JSON')}
-  const {error}=await sb.from($('#tn').value.trim()).insert(row);if(error)toast(error.message);else{toast('Inserted');load()}
-}
-function settings(){
-  const c=cfg();
-  setView(`<div class="card"><h3>Connection</h3><p class="mut">API: ${esc(c.url)}<br>CDN: ${esc(c.cdn)}<br>RTMP: ${esc(c.rtmp)}</p><button onclick="connectView()">Edit connection</button></div>
-  <div class="card"><h3>Reminders</h3><p class="mut">This page only uses your anon key. Row-level security in schema.sql decides who can read and write. Keep your service_role key and stream password out of the browser.</p></div>`);
-}
+async function db(){
+  const tabs=['videos','live_streams'];if(!tabs.includes(dbT))tabs.push(dbT);
+  view(`<div class="card"><div class="chips">${tabs.map(t=>`<button class="${t===dbT?'on':''}" onclick="dbT='${t}';dbPage=0;db()">${esc(t)}</button>`).join('')}<input id="nt" placeholder="Other table name" style="max-width:180px;margin:0"><button onclick="if($('#nt').value){dbT=$('#nt').value.trim();dbPage=0;db()}">Open</button></div></div>
+  <div class="card"><div class="scroll" id="tbl">Loading…</div><div class="acts" style="margin-top:10px"><button onclick="dbPage=Math.max(0,dbPage-1);db()">Prev</button><button onclick="dbPage++;db()">Next</button><span class="mut" id="pg"></span></div></div>
+  <div class="card" id="ed"><h3>Insert a row</h3><textarea id="js" rows="4" placeholder='{"title":"Example"}'></textarea><button onclick="dbSave()">Insert</button></div>`);
+  const {data,error}=await sb.from(dbT).select('*').order('created_at',{ascending:false}).range(dbPage*25,dbPage*25+24);
+  if(error)return $('#tbl').innerHTML='<p class="mut">'+esc(error.message)+'</p>';dbRows=data;$('#pg').textContent='Page '+(dbPage+1);
+  if(!data.length)return $('#tbl').innerHTML='<p class="mut">No rows.</p>';const cols=Object.keys(data[0]);
+  $('#tbl').innerHTML='<table><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr>'+data.map((r,i)=>`<tr class="r" onclick="dbEdit(${i})">`+cols.map(c=>'<td>'+esc(typeof r[c]==='object'?JSON.stringify(r[c]):r[c])+'</td>').join('')+'</tr>').join('')+'</table>'}
+function dbEdit(i){const r=dbRows[i];$('#ed').innerHTML=`<h3>Edit row</h3><textarea id="js" rows="9">${esc(JSON.stringify(r,null,2))}</textarea><div class="acts"><button class="p" onclick="dbSave('${r.id}')">Save</button><button class="d" onclick="del('${esc(dbT)}','${r.id}',db)">Delete</button></div>`;$('#ed').scrollIntoView({behavior:'smooth'})}
+async function dbSave(id){let row;try{row=JSON.parse($('#js').value)}catch(e){return toast('Invalid JSON')}
+  const {error}=id?await sb.from(dbT).update(row).eq('id',id):await sb.from(dbT).insert(row);toast(error?error.message:'Saved');if(!error)db()}
+async function storage(){
+  view('<p class="mut">Loading…</p>');const {data:{user}}=await sb.auth.getUser();
+  const {data,error}=await sb.storage.from('raw-uploads').list(user.id,{limit:100,sortBy:{column:'created_at',order:'desc'}});
+  const tot=(data||[]).reduce((a,f)=>a+(f.metadata?.size||0),0);
+  view(`<div class="grid"><div class="card stat"><b>${(data||[]).length}</b><span class="mut">Raw files (yours)</span></div><div class="card stat"><b>${fmt(tot)}</b><span class="mut">Raw storage used</span></div></div>
+  <div class="card"><h3>raw-uploads</h3>${error?'<p class="mut">'+esc(error.message)+'</p>':(data.length?data.map(f=>`<div class="row"><div>${esc(f.name)}<div class="mut">${fmt(f.metadata?.size||0)}</div></div><button class="d" onclick="rmFile('${esc(user.id+'/'+f.name)}')">Delete</button></div>`).join(''):'<p class="mut">No files.</p>')}
+  <p class="mut">Finished HLS video and live segments live in your Cloudflare R2 <code>hls</code> bucket; manage them in the Cloudflare dashboard.</p></div>`)}
+async function rmFile(p){if(!confirm('Delete file?'))return;const {error}=await sb.storage.from('raw-uploads').remove([p]);toast(error?error.message:'Deleted');storage()}
+async function analytics(){
+  view('<p class="mut">Loading…</p>');const {data}=await sb.from('videos').select('title,views,created_at,status').limit(1000);const rows=data||[];
+  const top=[...rows].sort((a,b)=>b.views-a.views).slice(0,8),m=Math.max(1,top[0]?.views||1),[d,lb]=days(rows,30);
+  view(`<div class="two"><div class="card"><h3>Uploads, last 30 days</h3>${bars(d,lb)}</div><div class="card"><h3>Top videos by views</h3>${top.map(v=>`<div class="mut" style="display:flex;justify-content:space-between"><span>${esc(v.title)}</span><span>${v.views}</span></div><div class="bar" style="margin-bottom:9px"><i style="width:${v.views/m*100}%"></i></div>`).join('')||'<p class="mut">No data.</p>'}</div></div>
+  <p class="mut">Bandwidth and request analytics are in your Cloudflare dashboard (R2 and your CDN domain).</p>`)}
+function settings(){const c=cfg();
+  view(`<div class="card"><h3>Connection</h3><p class="mut">API: ${esc(c.url)}<br>CDN: ${esc(c.cdn)}<br>OBS server: ${esc(c.rtmp)}</p><div class="acts"><button onclick="connectView()">Edit connection</button><button onclick="window.open('${esc(c.url)}','_blank')">Open Supabase Studio</button></div></div>
+  <div class="card"><h3>Reminders</h3><p class="mut">This dashboard only holds your anon key; row-level security in schema.sql controls access. SQL editor, table design and user management are in Supabase Studio. Keep the service_role key and stream password out of the browser.</p></div>`)}
 boot();
 </script></body></html>
