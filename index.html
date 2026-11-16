@@ -39,41 +39,60 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const cfg=()=>({url:store.get('url'),key:store.get('key'),cdn:store.get('cdn'),rtmp:store.get('rtmp')});
-const SECS=[['overview','Overview'],['videos','Videos'],['live','Live streams'],['db','Database'],['storage','Storage'],['analytics','Analytics'],['settings','Settings']];
-let sb,tab='overview',timer,dbT='videos',dbPage=0,dbRows=[];
+const SECS=[['connections','Connections'],['overview','Overview'],['videos','Videos'],['live','Live streams'],['db','Database'],['storage','Storage'],['analytics','Analytics'],['settings','Settings']];
+let sb,tab='',timer,dbT='videos',dbPage=0,dbRows=[];
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',3500)};
 const view=h=>$('#view').innerHTML=h;
 const fmt=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':n>=1e6?(n/1e6).toFixed(1)+' MB':n>=1e3?(n/1e3).toFixed(0)+' KB':n+' B';
 function play(url){const b=$('#player');b.innerHTML='<div class="card"><video controls autoplay playsinline></video><div class="mut"><code>'+esc(url)+'</code></div></div>';const v=b.querySelector('video');
  if(v.canPlayType('application/vnd.apple.mpegurl'))v.src=url;else if(window.Hls&&Hls.isSupported()){const h=new Hls();h.loadSource(url);h.attachMedia(v)}b.scrollIntoView({behavior:'smooth'})}
-async function boot(){
-  clearInterval(timer);const c=cfg();if(!c.url||!c.key)return connectView();
-  sb=supabase.createClient(c.url,c.key);const {data:{session}}=await sb.auth.getSession();
-  if(!session)return authView();
-  document.body.classList.remove('noauth');$('#who').textContent=session.user.email;go(tab);
-}
-function connectView(){
-  document.body.classList.add('noauth');$('#title').textContent='Connect';const c=cfg();
-  view(`<div class="card" style="max-width:520px"><h3>Connect your backend</h3>
-  <label class="mut">Supabase API URL</label><input id="u" placeholder="https://api.example.com" value="${esc(c.url)}">
-  <label class="mut">Anon key (never the service_role key)</label><input id="k" value="${esc(c.key)}">
-  <label class="mut">CDN base URL (R2 custom domain)</label><input id="c" placeholder="https://cdn.example.com" value="${esc(c.cdn)}">
-  <label class="mut">OBS server address</label><input id="r" placeholder="rtmp://YOUR_SERVER_IP/" value="${esc(c.rtmp)}">
-  <button class="p" onclick="saveCfg()">Save and continue</button></div>`);
-}
-function saveCfg(){store.set('url',$('#u').value.trim().replace(/\/$/,''));store.set('key',$('#k').value.trim());store.set('cdn',$('#c').value.trim().replace(/\/$/,''));store.set('rtmp',$('#r').value.trim());boot()}
+async function hashPw(pw,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);
+  const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:150000,hash:'SHA-256'},k,256);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const unlocked=()=>{try{return sessionStorage.getItem('unlocked')==='1'}catch(e){return false}};
+function setUnlocked(v){try{v?sessionStorage.setItem('unlocked','1'):sessionStorage.removeItem('unlocked')}catch(e){}}
+function boot(){clearInterval(timer);if(!unlocked())return lockView();document.body.classList.remove('noauth');
+  if(!tab)tab=(cfg().url&&cfg().key)?'overview':'connections';go(tab)}
+function lockView(){
+  document.body.classList.add('noauth');$('#title').textContent='Console login';$('#who').textContent='';const first=!store.get('lh');
+  view(`<div class="card" style="max-width:420px"><h3>${first?'Create your console login':'Console login'}</h3>
+  <input id="lu" placeholder="Username" value="${esc(store.get('lu'))}" ${first?'':'readonly'}><input id="lp" type="password" placeholder="Password">${first?'<input id="lp2" type="password" placeholder="Repeat password">':''}
+  <div class="acts"><button class="p" onclick="${first?'lockCreate()':'lockIn()'}">${first?'Create and continue':'Log in'}</button>${first?'':'<button class="d" onclick="lockReset()">Reset</button>'}</div>
+  <p class="mut">${first?'Choose a username and a password of 8+ characters. It locks this dashboard on this device.':'Log in to open the dashboard.'}</p></div>`)}
+async function lockCreate(){const u=$('#lu').value.trim(),p=$('#lp').value;
+  if(!u||p.length<8)return toast('Username and 8+ character password needed');if(p!==$('#lp2').value)return toast('Passwords do not match');
+  const salt=crypto.getRandomValues(new Uint32Array(4)).join('-');store.set('lu',u);store.set('ls',salt);store.set('lh',await hashPw(p,salt));setUnlocked(true);boot()}
+async function lockIn(){const h=await hashPw($('#lp').value,store.get('ls'));if(h!==store.get('lh'))return toast('Wrong password');setUnlocked(true);boot()}
+function lockReset(){if(!confirm('This clears the console login and all saved connection settings on this device.'))return;try{localStorage.clear()}catch(e){}setUnlocked(false);sb=null;tab='';boot()}
+function connections(){
+  const c=cfg();$('#view').innerHTML=`<div class="two"><div class="card"><h3>Supabase</h3>
+  <label class="mut">API URL</label><input id="u" placeholder="https://api.example.com" value="${esc(c.url)}">
+  <label class="mut">Anon (public) key. Never the service_role key.</label><input id="k" value="${esc(c.key)}"></div>
+  <div class="card"><h3>Cloudflare R2</h3>
+  <label class="mut">Account ID</label><input id="ra" value="${esc(store.get('ra'))}">
+  <label class="mut">Public CDN domain (custom domain on the hls bucket)</label><input id="c" placeholder="https://cdn.example.com" value="${esc(c.cdn)}">
+  <label class="mut">Raw uploads bucket</label><input id="rb" placeholder="raw-uploads" value="${esc(store.get('rb')||'raw-uploads')}">
+  <label class="mut">HLS bucket</label><input id="rh" placeholder="hls" value="${esc(store.get('rh')||'hls')}"></div>
+  <div class="card"><h3>Live streaming</h3><label class="mut">OBS server address</label><input id="r" placeholder="rtmp://YOUR_SERVER_IP/" value="${esc(c.rtmp)}"></div></div>
+  <div class="acts"><button class="p" onclick="saveCfg()">Save</button><button onclick="testCfg()">Save and test</button></div>
+  <p class="mut" id="tr"></p><div class="card"><p class="mut">R2 access keys and the Supabase service_role key are secrets. Put them only in the server .env file, never in this page.</p></div>`}
+function saveCfg(){store.set('url',$('#u').value.trim().replace(/\/$/,''));store.set('key',$('#k').value.trim());store.set('cdn',$('#c').value.trim().replace(/\/$/,''));store.set('rtmp',$('#r').value.trim());
+  store.set('ra',$('#ra').value.trim());store.set('rb',$('#rb').value.trim());store.set('rh',$('#rh').value.trim());sb=null;toast('Saved')}
+async function testCfg(){saveCfg();$('#tr').textContent='Testing…';const h=await health();
+  $('#tr').innerHTML=`<span class="${h.api?'up':'down'}"><span class="dot"></span>Supabase ${h.api?'reachable':'not reachable'}</span> &nbsp; <span class="${h.cdn?'up':'down'}"><span class="dot"></span>CDN ${h.cdn?'reachable':'not reachable or empty'}</span>`}
 function authView(){
-  document.body.classList.add('noauth');$('#title').textContent='Sign in';$('#who').textContent='';
-  view(`<div class="card" style="max-width:420px"><h3>Sign in</h3><input id="e" type="email" placeholder="Email"><input id="p" type="password" placeholder="Password">
-  <div class="acts"><button class="p" onclick="auth('in')">Sign in</button><button onclick="auth('up')">Create account</button><button onclick="connectView()">Settings</button></div></div>`);
-}
+  view(`<div class="card" style="max-width:420px"><h3>Sign in to Supabase</h3><p class="mut">Use an account from your Supabase project.</p><input id="e" type="email" placeholder="Email"><input id="p" type="password" placeholder="Password">
+  <div class="acts"><button class="p" onclick="auth('in')">Sign in</button><button onclick="auth('up')">Create account</button></div></div>`)}
 async function auth(m){const cr={email:$('#e').value,password:$('#p').value};
   const {error}=m==='in'?await sb.auth.signInWithPassword(cr):await sb.auth.signUp(cr);
-  if(error)return toast(error.message);toast(m==='up'?'Account created. Sign in now.':'Signed in');boot()}
-async function out(){await sb.auth.signOut();boot()}
-function go(t){tab=t;clearInterval(timer);$('#side').classList.remove('open');
-  $('#side').innerHTML='<h2>Media Backend</h2>'+SECS.map(([k,l])=>`<button class="${k===t?'on':''}" onclick="go('${k}')">${l}</button>`).join('')+'<button onclick="out()">Sign out</button>';
-  $('#title').textContent=SECS.find(s=>s[0]===t)[1];({overview,videos,live,db,storage,analytics,settings})[t]()}
+  if(error)return toast(error.message);toast(m==='up'?'Account created. Sign in now.':'Signed in');go(tab)}
+async function out(){try{if(sb)await sb.auth.signOut()}catch(e){}setUnlocked(false);boot()}
+async function go(t){tab=t;clearInterval(timer);$('#side').classList.remove('open');
+  $('#side').innerHTML='<h2>Media Backend</h2>'+SECS.map(([k,l])=>`<button class="${k===t?'on':''}" onclick="go('${k}')">${l}</button>`).join('')+'<button onclick="out()">Lock and sign out</button>';
+  $('#title').textContent=SECS.find(x=>x[0]===t)[1];if(t==='connections')return connections();
+  const c=cfg();if(!c.url||!c.key)return view('<div class="card"><h3>Not connected</h3><p class="mut">Add your Supabase details first.</p><button class="p" onclick="go(\'connections\')">Open Connections</button></div>');
+  sb=sb||supabase.createClient(c.url,c.key);
+  if(t!=='settings'){const {data:{session}}=await sb.auth.getSession();if(!session){$('#who').textContent='';return authView()}$('#who').textContent=session.user.email}
+  ({overview,videos,live,db,storage,analytics,settings})[t]()}
 async function count(t,f){let q=sb.from(t).select('*',{count:'exact',head:true});if(f)q=f(q);const {count}=await q;return count??0}
 function bars(vals,labels){const m=Math.max(1,...vals),w=300/vals.length;
   return `<svg viewBox="0 0 300 110" width="100%">${vals.map((v,i)=>{const h=v/m*80;return `<rect class="b" x="${i*w+2}" y="${90-h}" width="${w-4}" height="${h}" rx="2"><title>${labels[i]}: ${v}</title></rect>`}).join('')}${labels.map((l,i)=>i%3===0?`<text x="${i*w+2}" y="104">${l}</text>`:'').join('')}</svg>`}
@@ -144,7 +163,7 @@ async function analytics(){
   view(`<div class="two"><div class="card"><h3>Uploads, last 30 days</h3>${bars(d,lb)}</div><div class="card"><h3>Top videos by views</h3>${top.map(v=>`<div class="mut" style="display:flex;justify-content:space-between"><span>${esc(v.title)}</span><span>${v.views}</span></div><div class="bar" style="margin-bottom:9px"><i style="width:${v.views/m*100}%"></i></div>`).join('')||'<p class="mut">No data.</p>'}</div></div>
   <p class="mut">Bandwidth and request analytics are in your Cloudflare dashboard (R2 and your CDN domain).</p>`)}
 function settings(){const c=cfg();
-  view(`<div class="card"><h3>Connection</h3><p class="mut">API: ${esc(c.url)}<br>CDN: ${esc(c.cdn)}<br>OBS server: ${esc(c.rtmp)}</p><div class="acts"><button onclick="connectView()">Edit connection</button><button onclick="window.open('${esc(c.url)}','_blank')">Open Supabase Studio</button></div></div>
+  view(`<div class="card"><h3>Connection</h3><p class="mut">API: ${esc(c.url)}<br>CDN: ${esc(c.cdn)}<br>OBS server: ${esc(c.rtmp)}</p><div class="acts"><button onclick="go('connections')">Edit connections</button><button onclick="window.open('${esc(c.url)}','_blank')">Open Supabase Studio</button></div></div>
   <div class="card"><h3>Reminders</h3><p class="mut">This dashboard only holds your anon key; row-level security in schema.sql controls access. SQL editor, table design and user management are in Supabase Studio. Keep the service_role key and stream password out of the browser.</p></div>`)}
 boot();
 </script></body></html>
