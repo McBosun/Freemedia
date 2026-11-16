@@ -1,0 +1,4 @@
+# Only needed to put your Supabase API/Studio behind HTTPS. Live and VOD video go through R2, not this server.
+api.example.com {
+	reverse_proxy host.docker.internal:8000
+}

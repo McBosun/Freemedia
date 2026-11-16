@@ -1,0 +1,27 @@
+# Ingest only. Viewers never touch this server: segments are pushed to R2 (zero egress).
+logLevel: info
+rtmp: yes
+hls: no
+webrtc: no
+rtsp: yes
+authInternalUsers:
+  - user: publisher
+    pass: CHANGE_THIS_STREAM_PASSWORD
+    ips: []
+    permissions:
+      - action: publish
+  - user: any            # local-only reader used by the packaging ffmpeg below
+    pass:
+    ips: ['127.0.0.1', '::1']
+    permissions:
+      - action: read
+paths:
+  all_others:
+    runOnReady: >
+      sh -c "mkdir -p /live/$MTX_PATH &&
+      ffmpeg -nostdin -loglevel warning -rtsp_transport tcp -i rtsp://127.0.0.1:$RTSP_PORT/$MTX_PATH
+      -c copy -f hls -hls_time 4 -hls_list_size 6
+      -hls_flags delete_segments+temp_file+independent_segments
+      /live/$MTX_PATH/index.m3u8"
+    runOnReadyRestart: yes
+    runOnNotReady: sh -c "sleep 15; rm -rf /live/$MTX_PATH"
